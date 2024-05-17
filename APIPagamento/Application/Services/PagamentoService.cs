@@ -1,9 +1,7 @@
 ﻿using Domain.Entities;
 using Domain.Entities.Output;
 using Domain.Interfaces;
-using Domain.ValueObjects;
 using Newtonsoft.Json;
-using System.Net.Http;
 
 namespace Application.Interfaces
 {
@@ -84,7 +82,7 @@ namespace Application.Interfaces
 
             var payLoad = new PayloadQRCodeOutput()
             {
-                description = string.Format("Pedido_{0}", pagamento.IdPedido), 
+                description = string.Format("Pedido_{0}", pagamento.IdPedido),
                 external_reference = pagamento.IdPagamento.ToString(),
                 items =
                 [
@@ -93,8 +91,8 @@ namespace Application.Interfaces
                         title = string.Format("Pagamento_{0}", pagamento.IdPagamento),
                         description = "external_reference >>> IdPedido",
                         unit_price = valorPagamento,
-                        quantity = 1,                        
-                        unit_measure = "unit",                        
+                        quantity = 1,
+                        unit_measure = "unit",
                         total_amount = valorPagamento,
                     }
                 ],
@@ -103,7 +101,7 @@ namespace Application.Interfaces
                 {
                     id = _sponsorIdMercadoPago
                 },
-                title = string.Format("Pedido_{0}_Pagamento_{1}", pagamento.IdPedido,pagamento.IdPagamento),
+                title = string.Format("Pedido_{0}_Pagamento_{1}", pagamento.IdPedido, pagamento.IdPagamento),
                 total_amount = valorPagamento
             };
 

@@ -1,4 +1,6 @@
 ﻿using Domain.ValueObjects;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
@@ -9,6 +11,10 @@ namespace Domain.Entities
     [SwaggerSchemaFilter(typeof(PagamentoInputSchemaFilter))]
     public class Pagamento
     {
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string Id { get; set; }
+
         [JsonProperty("idPagamento")]
         public int IdPagamento { get; set; } // Identificador único da transação
 
@@ -34,5 +40,4 @@ namespace Domain.Entities
         //[JsonIgnore]
         //public Pedido? Pedido { get; set; } // Propriedade de navegação para o objeto Pedido
     }
-
 }

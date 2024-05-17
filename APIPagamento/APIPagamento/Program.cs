@@ -20,12 +20,15 @@ namespace APIPagamento
         {
             // Cria um builder de aplicação web com os argumentos passados.
             var builder = WebApplication.CreateBuilder(args);
-            
+
             builder.Services.AddHttpClient();
 
             // Adiciona serviços ao contêiner.
             //// Adiciona um serviço do tipo MySQLContext ao objeto builder.Services.
-            builder.Services.AddDbContext<MySQLContext>();
+            // builder.Services.AddDbContext<MySQLContext>();
+
+            // Adiciona um serviço do tipo MongoDBContext ao objeto builder.Services.
+            builder.Services.AddSingleton<MongoDBContext>();
 
             // Adiciona os serviços de controllers ao builder.
             builder.Services.AddControllers(options =>

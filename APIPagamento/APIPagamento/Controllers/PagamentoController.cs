@@ -142,7 +142,7 @@ namespace API.Controllers
         public async Task<IActionResult> ObterQRCodePagamento(int idPedido)
         {
             try
-            {                
+            {
                 var qrCode = await _pagamentoService.ObterQRCodePagamento(idPedido);
                 return Ok(qrCode);
 

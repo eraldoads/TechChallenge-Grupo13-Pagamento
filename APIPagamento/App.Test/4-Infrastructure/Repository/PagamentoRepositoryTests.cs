@@ -1,24 +1,30 @@
 using App.Test._4_Infrastructure.Context;
 using Data.Repository;
-using Domain.Base;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
+using Mongo2Go;
+using Data.Context;
+using MongoDB.Driver;
 
 namespace Data.Tests.Repository
 {
-    public class PagamentoRepositoryTests
+    public class PagamentoRepositoryTests : IDisposable
     {
-        private readonly MySQLContextTests _context;
+        private readonly MongoDBContextTests _context;
         private readonly PagamentoRepository _repository;
+        private readonly MongoDbRunner _runner;
 
         public PagamentoRepositoryTests()
         {
-            var optionsBuilder = new DbContextOptionsBuilder<MySQLContextTests>();
-            optionsBuilder.UseInMemoryDatabase(databaseName: "TestDatabase");
-            var options = optionsBuilder.Options;
+            // Inicia o MongoDbRunner
+            _runner = MongoDbRunner.Start();
 
-            _context = new MySQLContextTests(options);
+            // Cria uma nova instância do MongoDBContext
+            var settings = MongoClientSettings.FromUrl(new MongoUrl(_runner.ConnectionString));
+            var client = new MongoClient(settings);
+            _context = new MongoDBContextTests(client.GetDatabase("TestDatabase"));
+
             _repository = new PagamentoRepository(_context);
         }
 
@@ -28,19 +34,19 @@ namespace Data.Tests.Repository
         public async Task GetPagamentoByIdPedido_RetornaPagamento()
         {
             // Arrange
-            _context.Pagamento.RemoveRange(_context.Pagamento);
-            await _context.SaveChangesAsync();
+            await _context.Pagamento.DeleteManyAsync(Builders<Pagamento>.Filter.Empty);
 
             var idPedido = 1;
             var pagamento = new Pagamento
             {
+                Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
                 IdPedido = idPedido,
                 StatusPagamento = "Pendente",
                 ValorPagamento = 100.0f
             };
 
-            _context.Pagamento.Add(pagamento);
-            await _context.SaveChangesAsync();
+
+            await _context.Pagamento.InsertOneAsync(pagamento);
 
             // Act
             var result = await _repository.GetPagamentoByIdPedido(idPedido);
@@ -55,9 +61,6 @@ namespace Data.Tests.Repository
         public async Task GetPagamentoByIdPedido_RetornaNull()
         {
             // Arrange
-            _context.Pagamento.RemoveRange(_context.Pagamento);
-            await _context.SaveChangesAsync();
-
             var idPedido = 2;
             Pagamento pagamento = null;
 
@@ -75,9 +78,6 @@ namespace Data.Tests.Repository
         public async Task PostPagamento_RetornaPagamento()
         {
             // Arrange
-            _context.Pagamento.RemoveRange(_context.Pagamento);
-            await _context.SaveChangesAsync();
-
             var pagamento = new Pagamento
             {
                 IdPedido = 1,
@@ -102,13 +102,13 @@ namespace Data.Tests.Repository
             // Arrange
             var pagamento = new Pagamento
             {
+                Id = "1",
                 IdPedido = 1,
                 StatusPagamento = "Pendente",
                 ValorPagamento = 100.0f
             };
 
-            _context.Pagamento.Add(pagamento);
-            await _context.SaveChangesAsync();
+            _context.Pagamento.InsertOneAsync(pagamento);
 
             pagamento.StatusPagamento = "Pago";
 
@@ -122,31 +122,6 @@ namespace Data.Tests.Repository
         #endregion
 
         #region [Dispose]
-        [Trait("Categoria", "PagamentoRepository")]
-        [Fact(DisplayName = "Dispose_DeveDescartarContexto")]
-        public void Dispose_DeveDescartarContexto()
-        {
-            // Arrange
-            _context.Pagamento.RemoveRange(_context.Pagamento);
-            _context.SaveChangesAsync();
-
-            var produto = new Pagamento
-            {
-                IdPedido = 1,
-                StatusPagamento = "Pendente",
-                ValorPagamento = 100
-            };
-
-            _context.Pagamento.Add(produto);
-            _context.SaveChanges();
-
-            // Act
-            _repository.Dispose();
-
-            // Assert
-            Assert.NotNull(_context);
-        }
-
         [Trait("Categoria", "PagamentoRepository")]
         [Fact(DisplayName = "Dispose")]
         public void Dispose()

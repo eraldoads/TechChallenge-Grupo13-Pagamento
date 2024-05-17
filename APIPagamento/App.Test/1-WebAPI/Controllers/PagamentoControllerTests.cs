@@ -1,13 +1,10 @@
 ﻿using API.Controllers;
 using Application.Interfaces;
-using Domain.Base;
 using Domain.Entities;
 using Domain.Entities.Output;
 using Domain.ValueObjects;
-using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using System.ComponentModel.DataAnnotations;
 using Xunit;
 
 namespace Domain.Tests._1_WebAPI

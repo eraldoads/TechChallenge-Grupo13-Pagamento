@@ -1,14 +1,10 @@
 ﻿using Application.Interfaces;
-using Domain.Base;
 using Domain.Entities;
 using Domain.Entities.Output;
 using Domain.Interfaces;
-using Domain.ValueObjects;
-using Microsoft.AspNetCore.JsonPatch;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json;
-using System.ComponentModel.DataAnnotations;
 using Xunit;
 
 namespace App.Test._2_Application.Services

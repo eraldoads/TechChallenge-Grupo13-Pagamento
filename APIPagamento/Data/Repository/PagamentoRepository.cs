@@ -2,45 +2,39 @@
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
 
 namespace Data.Repository
 {
     public class PagamentoRepository : IPagamentoRepository
     {
-        private readonly MySQLContext _context;
+        private readonly IMongoCollection<Pagamento> _pagamentoCollection;
 
-        public PagamentoRepository(MySQLContext context)
+        public PagamentoRepository(MongoDBContext context)
         {
-            _context = context;
+            _pagamentoCollection = context.Pagamento;
         }
 
         public async Task<Pagamento?> GetPagamentoByIdPedido(int idPedido)
         {
             // Caso encontre mais de um registro pega sempre o ultimo.
-            return await _context.Pagamento.Where(p => p.IdPedido == idPedido)
-                                           .OrderByDescending(p => p.DataPagamento)
-                                           .FirstOrDefaultAsync();
+            return await _pagamentoCollection.Find(p => p.IdPedido == idPedido)
+                                             .SortByDescending(p => p.DataPagamento)
+                                             .FirstOrDefaultAsync();
         }
+
 
         public async Task<Pagamento> PostPagamento(Pagamento pagamento)
         {
-            if (_context.Pagamento is not null)
-            {
-                _context.Pagamento.Add(pagamento);
-                await _context.SaveChangesAsync();
-            }
+            await _pagamentoCollection.InsertOneAsync(pagamento);
             return pagamento;
         }
 
         public async Task<Pagamento> PutPagamento(Pagamento pagamento)
         {
-            if (_context.Pagamento is not null)
-            {
-                var pagto = await _context.Pagamento.FirstOrDefaultAsync(p => p.IdPagamento == pagamento.IdPagamento);
-                pagto.StatusPagamento = pagamento.StatusPagamento;
-                _context.Pagamento.Update(pagto);
-                await _context.SaveChangesAsync();
-            }
+            var filter = Builders<Pagamento>.Filter.Eq(p => p.IdPagamento, pagamento.IdPagamento);
+            var update = Builders<Pagamento>.Update.Set(p => p.StatusPagamento, pagamento.StatusPagamento);
+            await _pagamentoCollection.UpdateOneAsync(filter, update);
             return pagamento;
         }
 
@@ -52,7 +46,7 @@ namespace Data.Repository
 
         protected virtual void Dispose(bool disposing)
         {
-            _context.Dispose();
+            // Dispose any resources if needed
         }
     }
 }
