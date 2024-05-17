@@ -1,4 +1,4 @@
-# TechChallenge-Grupo13-Produto
+# TechChallenge-Grupo13-Pagamento
 Este repositório é dedicado ao microsserviço de pagamento, o qual foi desmembrado do monolito criado para a lanchonete durante a evolução da pós-graduação em Arquitetura de Software da FIAP.
 
 Tanto o build e push para o repositório no ECR da AWS usando Terraform, quanto a análise de código e cobertura de testes utilizando SonarCloud são realizados via Github Actions.
