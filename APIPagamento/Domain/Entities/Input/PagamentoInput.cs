@@ -33,5 +33,7 @@ namespace Domain.Entities
         [ForeignKey("IdPedido")]
         public int IdPedido { get; set; } // Id do Pedido pago.
 
+        //[JsonIgnore]
+        //public Pedido? Pedido { get; set; } // Propriedade de navegação para o objeto Pedido
     }
 }
