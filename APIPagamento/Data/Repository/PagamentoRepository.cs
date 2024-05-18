@@ -32,13 +32,13 @@ namespace Data.Repository
             return pagamentoInput;
         }
 
-        //public async Task<Pagamento> PutPagamento(Pagamento pagamento)
-        //{
-        //    var filter = Builders<Pagamento>.Filter.Eq(p => p.IdPagamento, pagamento.IdPagamento);
-        //    var update = Builders<Pagamento>.Update.Set(p => p.StatusPagamento, pagamento.StatusPagamento);
-        //    await _pagamentoCollection.UpdateOneAsync(filter, update);
-        //    return pagamento;
-        //}
+        public async Task<Pagamento> PutPagamento(Pagamento pagamento)
+        {
+            var filter = Builders<Pagamento>.Filter.Eq(p => p.IdPagamento, pagamento.IdPagamento);
+            var update = Builders<Pagamento>.Update.Set(p => p.StatusPagamento, pagamento.StatusPagamento);
+            await _pagamentoCollection.UpdateOneAsync(filter, update);
+            return pagamento;
+        }
 
         public void Dispose()
         {

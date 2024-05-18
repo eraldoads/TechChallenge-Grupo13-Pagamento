@@ -21,7 +21,7 @@ namespace Domain.ValueObjects.Tests
         {
             // Arrange
             var schema = new OpenApiSchema();
-            var context = new SchemaFilterContext(typeof(Pagamento), null, null);
+            var context = new SchemaFilterContext(typeof(PagamentoInput), null, null);
 
             // Act
             _PagamentoSchemaFilter.Apply(schema, context);

@@ -85,12 +85,14 @@ namespace Domain.Tests._1_WebAPI
         public async Task ProcessarPagamento_RetornaCreatedAtActionResult()
         {
             // Arrange
-            var pagamentoInput = new Pagamento
+            var pagamentoInput = new PagamentoInput
             {
-                IdPedido = 1,
+                IdPagamento = 1,
+                StatusPagamento = "Pendente",
                 ValorPagamento = 100.0f,
+                DataPagamento = DateTime.Parse("2024-05-17 23:47"),
                 MetodoPagamento = "QRCode",
-                StatusPagamento = "Pendente"
+                IdPedido = 1
             };
 
             var pagamentoOutput = new PagamentoOutput
@@ -122,12 +124,14 @@ namespace Domain.Tests._1_WebAPI
         public async Task ProcessarPagamento_RetornaBadRequest()
         {
             // Arrange
-            var pagamentoInput = new Pagamento
+            var pagamentoInput = new PagamentoInput
             {
-                IdPedido = 1,
+                IdPagamento = 21,
+                StatusPagamento = "Pendente",
                 ValorPagamento = 100.0f,
+                DataPagamento = DateTime.Parse("2024-05-17 23:47"),
                 MetodoPagamento = "QRCode",
-                StatusPagamento = "Pendente"
+                IdPedido = 12
             };
 
             _controller.ModelState.AddModelError("DataPagamento", "DataPagamento é obrigatório");
@@ -144,12 +148,14 @@ namespace Domain.Tests._1_WebAPI
         public async Task ProcessarPagamento_RetornaBadRequest_QuandoPagamentoInputInvalido()
         {
             // Arrange
-            var pagamentoInput = new Pagamento
+            var pagamentoInput = new PagamentoInput
             {
-                IdPedido = 1,
+                IdPagamento = 31,
+                StatusPagamento = "Pendente",
                 ValorPagamento = 100.0f,
+                DataPagamento = DateTime.Parse("2024-05-17 23:47"),
                 MetodoPagamento = "QRCode",
-                StatusPagamento = "Pendente"
+                IdPedido = 13
             };
 
             _controller.ModelState.AddModelError("DataPagamento", "DataPagamento é obrigatório");
@@ -166,12 +172,14 @@ namespace Domain.Tests._1_WebAPI
         public async Task ProcessarPagamento_RetornaPreconditionFailed()
         {
             // Arrange
-            var pagamentoInput = new Pagamento
+            var pagamentoInput = new PagamentoInput
             {
-                IdPedido = 1,
+                IdPagamento = 10,
+                StatusPagamento = "Pendente",
                 ValorPagamento = 100.0f,
+                DataPagamento = DateTime.Parse("2024-05-17 23:47"),
                 MetodoPagamento = "QRCode",
-                StatusPagamento = "Pendente"
+                IdPedido = 10
             };
 
             _AppService.Setup(service => service.ProcessarPagamento(pagamentoInput))
@@ -190,12 +198,14 @@ namespace Domain.Tests._1_WebAPI
         public async Task ProcessarPagamento_RetornaErroInterno()
         {
             // Arrange
-            var pagamentoInput = new Pagamento
+            var pagamentoInput = new PagamentoInput
             {
-                IdPedido = 1,
+                IdPagamento = 11,
+                StatusPagamento = "Pendente",
                 ValorPagamento = 100.0f,
+                DataPagamento = DateTime.Parse("2024-05-17 23:47"),
                 MetodoPagamento = "QRCode",
-                StatusPagamento = "Pendente"
+                IdPedido = 11
             };
 
             _AppService.Setup(service => service.ProcessarPagamento(pagamentoInput)).ThrowsAsync(new Exception());

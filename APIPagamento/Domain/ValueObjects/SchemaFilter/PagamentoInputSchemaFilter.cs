@@ -10,11 +10,12 @@ namespace Domain.ValueObjects
         public void Apply(OpenApiSchema schema, SchemaFilterContext context)
         {
             // verifica se o contexto é da classe Pagamento
-            if (context.Type == typeof(Pagamento))
+            if (context.Type == typeof(PagamentoInput))
             {
                 // cria um objeto OpenApiObject com os valores desejados
                 var modeloPagamento = new OpenApiObject
                 {
+                    ["idPagamento"] = new OpenApiInteger(0),
                     ["StatusPagamento"] = new OpenApiString("Pendente"),
                     ["ValorPagamento"] = new OpenApiInteger(0),
                     ["MetodoPagamento"] = new OpenApiString("string"),
