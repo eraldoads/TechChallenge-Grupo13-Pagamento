@@ -74,7 +74,7 @@ namespace API.Controllers
             Tags = new[] { "Pagamento" }
         )]
         [SwaggerResponse(201, "Pagamento processado com sucesso!", typeof(PagamentoOutput))]
-        public async Task<ActionResult<Pagamento>> ProcessarPagamento([FromBody] Pagamento pagamentoInput)
+        public async Task<ActionResult<Pagamento>> ProcessarPagamento([FromBody] PagamentoInput pagamentoInput)
         {
             try
             {

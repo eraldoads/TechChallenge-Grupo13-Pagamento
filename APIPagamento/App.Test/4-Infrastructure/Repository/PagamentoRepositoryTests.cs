@@ -78,7 +78,7 @@ namespace Data.Tests.Repository
         public async Task PostPagamento_RetornaPagamento()
         {
             // Arrange
-            var pagamento = new Pagamento
+            var pagamento = new PagamentoInput
             {
                 IdPedido = 1,
                 StatusPagamento = "Pendente",

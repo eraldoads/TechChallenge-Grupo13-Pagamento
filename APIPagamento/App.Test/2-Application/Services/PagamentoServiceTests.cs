@@ -79,7 +79,7 @@ namespace App.Test._2_Application.Services
         public async Task ProcessarPagamento_RetornaPagamentoOutput()
         {
             // Arrange
-            var pagamentoInput = new Pagamento
+            var pagamentoInput = new PagamentoInput
             {
                 IdPagamento = 1,
                 IdPedido = 1,

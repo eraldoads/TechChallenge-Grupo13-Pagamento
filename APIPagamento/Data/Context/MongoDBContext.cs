@@ -34,5 +34,6 @@ namespace Data.Context
         }
 
         public IMongoCollection<Pagamento> Pagamento => _database.GetCollection<Pagamento>("pagamento");
+        public IMongoCollection<PagamentoInput> PagamentoInput => _database.GetCollection<PagamentoInput>("pagamento");
     }
 }

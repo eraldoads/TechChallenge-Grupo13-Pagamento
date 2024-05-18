@@ -2,8 +2,8 @@ name: SonarCloud
 on:
   push:
     branches:
-      - feature/ERA-MicrosservicoPAG
       - develop
+      - main
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
