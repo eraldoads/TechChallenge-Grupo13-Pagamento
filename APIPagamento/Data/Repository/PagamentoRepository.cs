@@ -9,10 +9,12 @@ namespace Data.Repository
     public class PagamentoRepository : IPagamentoRepository
     {
         private readonly IMongoCollection<Pagamento> _pagamentoCollection;
+        private readonly IMongoCollection<PagamentoInput> _pagamentoInputCollection;
 
         public PagamentoRepository(MongoDBContext context)
         {
             _pagamentoCollection = context.Pagamento;
+            _pagamentoInputCollection = context.PagamentoInput;
         }
 
         public async Task<Pagamento?> GetPagamentoByIdPedido(int idPedido)
@@ -24,19 +26,19 @@ namespace Data.Repository
         }
 
 
-        public async Task<Pagamento> PostPagamento(Pagamento pagamento)
+        public async Task<PagamentoInput> PostPagamento(PagamentoInput pagamentoInput)
         {
-            await _pagamentoCollection.InsertOneAsync(pagamento);
-            return pagamento;
+            await _pagamentoInputCollection.InsertOneAsync(pagamentoInput);
+            return pagamentoInput;
         }
 
-        public async Task<Pagamento> PutPagamento(Pagamento pagamento)
-        {
-            var filter = Builders<Pagamento>.Filter.Eq(p => p.IdPagamento, pagamento.IdPagamento);
-            var update = Builders<Pagamento>.Update.Set(p => p.StatusPagamento, pagamento.StatusPagamento);
-            await _pagamentoCollection.UpdateOneAsync(filter, update);
-            return pagamento;
-        }
+        //public async Task<Pagamento> PutPagamento(Pagamento pagamento)
+        //{
+        //    var filter = Builders<Pagamento>.Filter.Eq(p => p.IdPagamento, pagamento.IdPagamento);
+        //    var update = Builders<Pagamento>.Update.Set(p => p.StatusPagamento, pagamento.StatusPagamento);
+        //    await _pagamentoCollection.UpdateOneAsync(filter, update);
+        //    return pagamento;
+        //}
 
         public void Dispose()
         {

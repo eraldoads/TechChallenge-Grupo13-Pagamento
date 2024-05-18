@@ -41,7 +41,7 @@ namespace Application.Interfaces
             };
         }
 
-        public async Task<PagamentoOutput> ProcessarPagamento(Pagamento pagamentoInput)
+        public async Task<PagamentoOutput> ProcessarPagamento(PagamentoInput pagamentoInput)
         {
             // Carregar o Pedido correspondente
             //var pedido = await _pedidoRepository.GetPedidoById(pagamentoInput.IdPedido) ??
