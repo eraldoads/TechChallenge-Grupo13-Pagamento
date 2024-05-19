@@ -2,7 +2,6 @@ name: SonarCloud
 on:
   push:
     branches:
-      - homolog
       - main
       
   pull_request:
