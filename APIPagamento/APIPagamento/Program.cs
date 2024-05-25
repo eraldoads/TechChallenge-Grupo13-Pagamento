@@ -1,5 +1,7 @@
 using Application.Interfaces;
+using Application.Services;
 using Data.Context;
+using Data.Messaging;
 using Data.Repository;
 using Domain.Interfaces;
 using Domain.ValueObjects;
@@ -42,6 +44,11 @@ namespace APIPagamento
 
             // Adiciona os repositórios específicos ao contêiner.
             builder.Services.AddScoped<IPagamentoRepository, PagamentoRepository>();
+
+            builder.Services.AddScoped<IPagamentoMessageQueue, PagamentoMessageQueue>();
+            builder.Services.AddScoped<IPagamentoMessageService, PagamentoMessageService>();
+            builder.Services.AddHostedService<PagamentoWorkerService>();
+            builder.Services.AddScoped<IPagamentoScopedService, PagamentoScopedService>();            
 
             // Adiciona o suporte ao NewtonsoftJson aos controllers.
             builder.Services.AddControllers().AddNewtonsoftJson();
