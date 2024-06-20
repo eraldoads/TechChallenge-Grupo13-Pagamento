@@ -18,17 +18,19 @@ namespace Data.Messaging
             ConnectRabbitMQ();
         }
 
-        public Task ReceberMensagem()
-        {            
+        public Task<string> ReceberMensagem()
+        {
+            var tcs = new TaskCompletionSource<string>();
+
             var consumer = new EventingBasicConsumer(_channel);
             consumer.Received += (ch, ea) =>
             {
-                // received message
                 string content = Encoding.UTF8.GetString(ea.Body.ToArray());
-
-                // handle the received message
                 HandleMessage(content);
                 _channel.BasicAck(ea.DeliveryTag, false);
+
+                // Sinaliza que a mensagem foi recebida e processada
+                tcs.SetResult(content);
             };
 
             consumer.Shutdown += OnConsumerShutdown;
@@ -36,9 +38,12 @@ namespace Data.Messaging
             consumer.Unregistered += OnConsumerUnregistered;
             consumer.ConsumerCancelled += OnConsumerConsumerCancelled;
 
-            _channel.BasicConsume("pagamento_pendente", false, consumer);
-            return Task.CompletedTask;
+            _channel.BasicConsume("novo_pedido", false, consumer);
+
+            // Retorna a Task que será completada quando a mensagem for recebida
+            return tcs.Task;
         }
+
 
         private void ConnectRabbitMQ()
         {
@@ -47,19 +52,17 @@ namespace Data.Messaging
             _connection = factory.CreateConnection();            
             _channel = _connection.CreateModel();
 
-            _channel.ExchangeDeclare("pagamento_exchange", ExchangeType.Direct);
-            _channel.QueueDeclare("pagamento_pendente", false, false, false, null);
-            _channel.QueueBind("pagamento_pendente", "pagamento_exchange", "pagamento_pendente.*", null);
+            _channel.ExchangeDeclare("novo_pedido_exchange", ExchangeType.Direct);
+            _channel.QueueDeclare("novo_pedido", false, false, false, null);
+            _channel.QueueBind("novo_pedido", "novo_pedido_exchange", "novo_pedido.*", null);
             _channel.BasicQos(0, 1, false);
 
             _connection.ConnectionShutdown += RabbitMQ_ConnectionShutdown;
         }
 
-
-
         private void HandleMessage(string content)
         {            
-            _logger.LogInformation($"Mensagem recebida /n{content}");
+            _logger.LogInformation($"Mensagem recebida {content}");
         }
 
         private void OnConsumerConsumerCancelled(object sender, ConsumerEventArgs e) { }

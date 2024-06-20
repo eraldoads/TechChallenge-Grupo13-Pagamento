@@ -6,7 +6,7 @@ namespace Domain.Entities.Output
     public class PagamentoOutput : PagamentoStatusOutput
     {
         [JsonProperty(Order = 1)]
-        public int IdPagamento { get; set; }
+        public Guid IdPagamento { get; set; }
         [JsonProperty(Order = 2)]
         public float ValorPagamento { get; set; }
         [JsonProperty(Order = 3)]

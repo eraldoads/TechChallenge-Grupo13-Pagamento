@@ -46,6 +46,7 @@ namespace APIPagamento
             builder.Services.AddScoped<IPagamentoRepository, PagamentoRepository>();
 
             builder.Services.AddScoped<IPagamentoMessageQueue, PagamentoMessageQueue>();
+            builder.Services.AddScoped<IPagamentoMessageSender, PagamentoMessageSender>();
             builder.Services.AddScoped<IPagamentoMessageService, PagamentoMessageService>();
             builder.Services.AddHostedService<PagamentoWorkerService>();
             builder.Services.AddScoped<IPagamentoScopedService, PagamentoScopedService>();            
