@@ -11,8 +11,8 @@ namespace Domain.Entities
     [SwaggerSchemaFilter(typeof(PagamentoInputSchemaFilter))]
     public class PagamentoInput
     {
-        [JsonProperty("idPagamento")]
-        public int IdPagamento { get; set; } // Identificador único da transação
+        //[JsonProperty("_id")]
+        //public Guid _id { get; set; } // Identificador único da transação
 
         [JsonProperty("statusPagamento")]
         public string? StatusPagamento { get; set; } = "Pendente"; // TODO: Transformar em um ENUM

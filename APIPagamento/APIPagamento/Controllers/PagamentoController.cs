@@ -98,35 +98,35 @@ namespace API.Controllers
             }
         }
 
-        //// POST : /pagamento/webhook
-        //[HttpPost("webhook")]
-        //[SwaggerOperation(
-        //    Summary = "Endpoint para receber notificações de pagamento",
-        //    Description = @"Recebe notificações assíncronas de pagamento do Mercado Pago </br>                        
-        //    <b>Parâmetros de entrada:</b>
-        //    <br/> • <b>id</b>: o identificador da ordem de pagamento no Mercado Pago ⇒ <font color='red'><b>Obrigatório</b></font>
-        //    <br/> • <b>topic</b>: este endpoint somente tratará requisições com o parâmetro topic=merchant_order ⇒ <font color='red'><b>Obrigatório</b></font>
-        //    <br/>",
-        //    Tags = new[] { "Pagamento" }
-        //)]
-        //[ProducesResponseType(StatusCodes.Status200OK)]
-        //public async Task<IActionResult> ReceberNotificacaoPagamento([FromQuery]long id, [FromQuery] string topic)
-        //{
-        //    try
-        //    {
-        //        if (topic.Equals("merchant_order"))
-        //        {                    
-        //            await _pagamentoService.ProcessarNotificacaoPagamento(id);
-        //        }
+        // POST : /pagamento/webhook
+        [HttpPost("webhook")]
+        [SwaggerOperation(
+            Summary = "Endpoint para receber notificações de pagamento",
+            Description = @"Recebe notificações assíncronas de pagamento do Mercado Pago </br>                        
+            <b>Parâmetros de entrada:</b>
+            <br/> • <b>id</b>: o identificador da ordem de pagamento no Mercado Pago ⇒ <font color='red'><b>Obrigatório</b></font>
+            <br/> • <b>topic</b>: este endpoint somente tratará requisições com o parâmetro topic=merchant_order ⇒ <font color='red'><b>Obrigatório</b></font>
+            <br/>",
+            Tags = new[] { "Pagamento" }
+        )]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> ReceberNotificacaoPagamento([FromQuery] long id, [FromQuery] string topic)
+        {
+            try
+            {
+                if (topic.Equals("merchant_order"))
+                {
+                    await _pagamentoService.ProcessarNotificacaoPagamento(id);
+                }
 
-        //        return Ok();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // Tratar exceções, se necessário
-        //        return StatusCode(500, $"Erro ao processar webhook: {ex.Message}");
-        //    }
-        //}
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                // Tratar exceções, se necessário
+                return StatusCode(500, $"Erro ao processar webhook: {ex.Message}");
+            }
+        }
 
         // Get : /pagamento/idPedido/qrcode
         [HttpGet("{idPedido}/qrcode")]

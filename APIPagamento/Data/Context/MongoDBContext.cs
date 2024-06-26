@@ -30,7 +30,7 @@ namespace Data.Context
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Pagamento>().HasKey(p => p.IdPagamento);
+            //modelBuilder.Entity<Pagamento>().HasKey(p => p._id);
         }
 
         public IMongoCollection<Pagamento> Pagamento => _database.GetCollection<Pagamento>("pagamento");
