@@ -12,6 +12,10 @@ namespace Data.Messaging
         private IConnection _connection;
         private IModel _channel;
 
+        private readonly string _hostname = Environment.GetEnvironmentVariable("RABBIT_HOSTNAME");
+        private readonly string _username = Environment.GetEnvironmentVariable("RABBIT_USERNAME");
+        private readonly string _password = Environment.GetEnvironmentVariable("RABBIT_PASSWORD");
+
         public PagamentoMessageQueue(ILogger<PagamentoMessageQueue> logger) 
         {
             _logger = logger;
@@ -47,8 +51,13 @@ namespace Data.Messaging
 
         private void ConnectRabbitMQ()
         {
-            var factory = new ConnectionFactory { HostName = "localhost" };
-            
+            var factory = new ConnectionFactory()
+            {
+                HostName = _hostname,
+                UserName = _username,
+                Password = _password
+            };
+
             _connection = factory.CreateConnection();            
             _channel = _connection.CreateModel();
 
