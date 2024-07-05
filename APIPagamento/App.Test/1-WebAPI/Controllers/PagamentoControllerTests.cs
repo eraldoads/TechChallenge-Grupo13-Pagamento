@@ -86,8 +86,7 @@ namespace Domain.Tests._1_WebAPI
         {
             // Arrange
             var pagamentoInput = new PagamentoInput
-            {
-                IdPagamento = 1,
+            {                
                 StatusPagamento = "Pendente",
                 ValorPagamento = 100.0f,
                 DataPagamento = DateTime.Parse("2024-05-17 23:47"),
@@ -96,8 +95,7 @@ namespace Domain.Tests._1_WebAPI
             };
 
             var pagamentoOutput = new PagamentoOutput
-            {
-                IdPagamento = 1,
+            {                
                 ValorPagamento = pagamentoInput.ValorPagamento,
                 MetodoPagamento = pagamentoInput.MetodoPagamento,
                 StatusPagamento = pagamentoInput.StatusPagamento,
@@ -125,8 +123,7 @@ namespace Domain.Tests._1_WebAPI
         {
             // Arrange
             var pagamentoInput = new PagamentoInput
-            {
-                IdPagamento = 21,
+            {                
                 StatusPagamento = "Pendente",
                 ValorPagamento = 100.0f,
                 DataPagamento = DateTime.Parse("2024-05-17 23:47"),
@@ -149,13 +146,11 @@ namespace Domain.Tests._1_WebAPI
         {
             // Arrange
             var pagamentoInput = new PagamentoInput
-            {
-                IdPagamento = 31,
+            {                
                 StatusPagamento = "Pendente",
                 ValorPagamento = 100.0f,
                 DataPagamento = DateTime.Parse("2024-05-17 23:47"),
-                MetodoPagamento = "QRCode",
-                IdPedido = 13
+                MetodoPagamento = "QRCode"                
             };
 
             _controller.ModelState.AddModelError("DataPagamento", "DataPagamento é obrigatório");
@@ -173,8 +168,7 @@ namespace Domain.Tests._1_WebAPI
         {
             // Arrange
             var pagamentoInput = new PagamentoInput
-            {
-                IdPagamento = 10,
+            {                
                 StatusPagamento = "Pendente",
                 ValorPagamento = 100.0f,
                 DataPagamento = DateTime.Parse("2024-05-17 23:47"),
@@ -199,8 +193,7 @@ namespace Domain.Tests._1_WebAPI
         {
             // Arrange
             var pagamentoInput = new PagamentoInput
-            {
-                IdPagamento = 11,
+            {                
                 StatusPagamento = "Pendente",
                 ValorPagamento = 100.0f,
                 DataPagamento = DateTime.Parse("2024-05-17 23:47"),

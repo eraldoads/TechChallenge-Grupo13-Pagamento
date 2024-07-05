@@ -2,6 +2,8 @@
 {
     public interface IPagamentoMessageQueue
     {
-        Task<string> ReceberMensagem();
+        event Func<string, Task> MessageReceived;
+        Task StartListening();
+        void ReenqueueMessage(string message);
     }
 }

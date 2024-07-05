@@ -2,52 +2,91 @@
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Collections.Concurrent;
 using System.Text;
 
 namespace Data.Messaging
 {
-    public class PagamentoMessageQueue : IPagamentoMessageQueue
+    public class PagamentoMessageQueue : IPagamentoMessageQueue, IDisposable
     {
-        private readonly ILogger _logger;
+        private readonly ILogger<PagamentoMessageQueue> _logger;
         private IConnection _connection;
         private IModel _channel;
+        private bool _disposed = false;
 
         private readonly string _hostname = Environment.GetEnvironmentVariable("RABBIT_HOSTNAME");
         private readonly string _username = Environment.GetEnvironmentVariable("RABBIT_USERNAME");
         private readonly string _password = Environment.GetEnvironmentVariable("RABBIT_PASSWORD");
+        private readonly IPagamentoMessageSender _sender;
 
-        public PagamentoMessageQueue(ILogger<PagamentoMessageQueue> logger) 
+        private ConcurrentDictionary<string, int> _retryCountDictionary = new ConcurrentDictionary<string, int>();
+
+        public event Func<string, Task> MessageReceived;
+
+        public PagamentoMessageQueue(ILogger<PagamentoMessageQueue> logger, IPagamentoMessageSender sender)
         {
             _logger = logger;
             ConnectRabbitMQ();
+            _sender = sender;
         }
 
-        public Task<string> ReceberMensagem()
+        public async Task StartListening()
         {
-            var tcs = new TaskCompletionSource<string>();
+            EnsureNotDisposed();
 
-            var consumer = new EventingBasicConsumer(_channel);
-            consumer.Received += (ch, ea) =>
+            var consumer = new AsyncEventingBasicConsumer(_channel);
+            consumer.Received += async (ch, ea) =>
             {
                 string content = Encoding.UTF8.GetString(ea.Body.ToArray());
-                HandleMessage(content);
-                _channel.BasicAck(ea.DeliveryTag, false);
 
-                // Sinaliza que a mensagem foi recebida e processada
-                tcs.SetResult(content);
+                try
+                {
+                    if (MessageReceived != null)
+                    {
+                        await MessageReceived(content);
+                    }
+                    // Ack se a mensagem foi processada com sucesso
+                    _channel.BasicAck(ea.DeliveryTag, false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Erro ao processar mensagem, tentando recolocar na fila...");
+
+                    if (_retryCountDictionary.TryGetValue(content, out int retryCount))
+                    {
+                        if (retryCount < 10) // Máximo de tentativas
+                        {                            
+                            _retryCountDictionary.AddOrUpdate(content, 1, (key, oldValue) => oldValue + 1);
+                            // Rejeita e reenfileira a mensagem
+                            _channel.BasicNack(ea.DeliveryTag, false, true);
+                        }
+                        else
+                        {
+                            _logger.LogError($"Falha ao processar a mensagem após {retryCount} tentativas, descartando a mensagem.");
+                            _channel.BasicAck(ea.DeliveryTag, false); // Ack para descartar a mensagem
+                            _retryCountDictionary.TryRemove(content, out _); // Remove do dicionário de retry
+                            _sender.SendMessage("pagamento_erro", content);
+                        }
+                    }
+                    else
+                    {
+                        // Adiciona ao dicionário de retry
+                        _retryCountDictionary.TryAdd(content, 1);
+                        // Rejeita e reenfileira a mensagem
+                        _channel.BasicNack(ea.DeliveryTag, false, true);
+                    }
+                }
             };
 
-            consumer.Shutdown += OnConsumerShutdown;
-            consumer.Registered += OnConsumerRegistered;
-            consumer.Unregistered += OnConsumerUnregistered;
-            consumer.ConsumerCancelled += OnConsumerConsumerCancelled;
-
             _channel.BasicConsume("novo_pedido", false, consumer);
-
-            // Retorna a Task que será completada quando a mensagem for recebida
-            return tcs.Task;
         }
 
+        public void ReenqueueMessage(string message)
+        {
+            EnsureNotDisposed();
+            var body = Encoding.UTF8.GetBytes(message);
+            _channel.BasicPublish("novo_pedido_exchange", "novo_pedido.*", null, body);
+        }
 
         private void ConnectRabbitMQ()
         {
@@ -55,10 +94,11 @@ namespace Data.Messaging
             {
                 HostName = _hostname,
                 UserName = _username,
-                Password = _password
+                Password = _password,
+                DispatchConsumersAsync = true
             };
 
-            _connection = factory.CreateConnection();            
+            _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
 
             _channel.ExchangeDeclare("novo_pedido_exchange", ExchangeType.Direct);
@@ -69,21 +109,27 @@ namespace Data.Messaging
             _connection.ConnectionShutdown += RabbitMQ_ConnectionShutdown;
         }
 
-        private void HandleMessage(string content)
-        {            
-            _logger.LogInformation($"Mensagem recebida {content}");
+        private void RabbitMQ_ConnectionShutdown(object sender, ShutdownEventArgs e)
+        {
+            _logger.LogInformation("RabbitMQ connection shutdown.");
         }
 
-        private void OnConsumerConsumerCancelled(object sender, ConsumerEventArgs e) { }
-        private void OnConsumerUnregistered(object sender, ConsumerEventArgs e) { }
-        private void OnConsumerRegistered(object sender, ConsumerEventArgs e) { }
-        private void OnConsumerShutdown(object sender, ShutdownEventArgs e) { }
-        private void RabbitMQ_ConnectionShutdown(object sender, ShutdownEventArgs e) { }
+        private void EnsureNotDisposed()
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(PagamentoMessageQueue));
+            }
+        }
 
         public void Dispose()
         {
-            _channel.Close();
-            _connection.Close();            
+            if (_disposed) return;
+
+            _disposed = true;
+
+            _channel?.Close();
+            _connection?.Close();
         }
     }
 }
