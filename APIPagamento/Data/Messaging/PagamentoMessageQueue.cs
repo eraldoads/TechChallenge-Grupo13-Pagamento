@@ -54,7 +54,7 @@ namespace Data.Messaging
 
                     if (_retryCountDictionary.TryGetValue(content, out int retryCount))
                     {
-                        if (retryCount < 10) // Máximo de tentativas
+                        if (retryCount < 3) // Máximo de tentativas
                         {                            
                             _retryCountDictionary.AddOrUpdate(content, 1, (key, oldValue) => oldValue + 1);
                             // Rejeita e reenfileira a mensagem
