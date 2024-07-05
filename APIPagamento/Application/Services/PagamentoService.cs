@@ -2,7 +2,7 @@
 using Domain.Entities.Output;
 using Domain.Interfaces;
 using Newtonsoft.Json;
-using System.Text.Json;
+using System.Transactions;
 
 namespace Application.Interfaces
 {
@@ -162,16 +162,21 @@ namespace Application.Interfaces
                         break;
                 }
 
-                if (!statusPagamento.Equals(pagamento.StatusPagamento))
+                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
-                    pagamento.StatusPagamento = statusPagamento;
-                    await _pagamentoRepository.PutPagamento(pagamento);
-                }
+                    if (!statusPagamento.Equals(pagamento.StatusPagamento))
+                    {
+                        pagamento.StatusPagamento = statusPagamento;
+                        await _pagamentoRepository.PutPagamento(pagamento);
+                    }
 
-                if (ordemPagamento.order_status.Equals("paid"))
-                {
-                    string message = JsonConvert.SerializeObject(pagamento);
-                    _pagamentoMessageSender.SendMessage("pagamento_aprovado", message);
+                    if (ordemPagamento.order_status.Equals("paid"))
+                    {
+                        string message = JsonConvert.SerializeObject(pagamento);
+                        _pagamentoMessageSender.SendMessage("pagamento_aprovado", message);
+                    }
+
+                    scope.Complete();
                 }
             }
         }
