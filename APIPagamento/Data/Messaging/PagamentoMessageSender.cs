@@ -1,17 +1,18 @@
-﻿namespace Data.Messaging
-{
-    using Domain.Interfaces;
-    using RabbitMQ.Client;
-    using System.Text;
+﻿using Domain.Interfaces;
+using RabbitMQ.Client;
+using System;
+using System.Text;
 
+namespace Data.Messaging
+{
     public class PagamentoMessageSender : IPagamentoMessageSender
-    {                
+    {
         private readonly string _hostname = Environment.GetEnvironmentVariable("RABBIT_HOSTNAME");
         private readonly string _username = Environment.GetEnvironmentVariable("RABBIT_USERNAME");
         private readonly string _password = Environment.GetEnvironmentVariable("RABBIT_PASSWORD");
 
         public PagamentoMessageSender()
-        {            
+        {
         }
 
         public void SendMessage(string queueName, string message)
@@ -20,7 +21,17 @@
             {
                 HostName = _hostname,
                 UserName = _username,
-                Password = _password
+                Password = _password,
+                Port = 5671, // Porta para SSL
+                Ssl = new SslOption
+                {
+                    Enabled = true,
+                    ServerName = _hostname, // Ou o nome do servidor conforme certificado
+                    Version = System.Security.Authentication.SslProtocols.Tls12 // Certifique-se de que a versão TLS é suportada pelo seu servidor
+                },
+                RequestedConnectionTimeout = TimeSpan.FromSeconds(60), // Timeout de conexão
+                SocketReadTimeout = TimeSpan.FromSeconds(60), // Timeout de leitura
+                SocketWriteTimeout = TimeSpan.FromSeconds(60) // Timeout de escrita
             };
 
             using (var connection = factory.CreateConnection())
@@ -43,5 +54,4 @@
             }
         }
     }
-
 }
