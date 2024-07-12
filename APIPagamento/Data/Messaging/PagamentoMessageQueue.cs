@@ -2,8 +2,11 @@
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using RabbitMQ.Client.Exceptions;
+using System;
 using System.Collections.Concurrent;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Data.Messaging
 {
@@ -26,8 +29,8 @@ namespace Data.Messaging
         public PagamentoMessageQueue(ILogger<PagamentoMessageQueue> logger, IPagamentoMessageSender sender)
         {
             _logger = logger;
-            ConnectRabbitMQ();
             _sender = sender;
+            ConnectRabbitMQ();
         }
 
         public async Task StartListening()
@@ -55,7 +58,7 @@ namespace Data.Messaging
                     if (_retryCountDictionary.TryGetValue(content, out int retryCount))
                     {
                         if (retryCount < 3) // Máximo de tentativas
-                        {                            
+                        {
                             _retryCountDictionary.AddOrUpdate(content, 1, (key, oldValue) => oldValue + 1);
                             // Rejeita e reenfileira a mensagem
                             _channel.BasicNack(ea.DeliveryTag, false, true);
@@ -95,18 +98,43 @@ namespace Data.Messaging
                 HostName = _hostname,
                 UserName = _username,
                 Password = _password,
+                Port = 5671, // Porta para SSL
+                Ssl = new SslOption
+                {
+                    Enabled = true,
+                    ServerName = _hostname, // Ou o nome do servidor conforme certificado
+                    Version = System.Security.Authentication.SslProtocols.Tls12 // Certifique-se de que a versão TLS é suportada pelo seu servidor
+                },
+                RequestedConnectionTimeout = TimeSpan.FromSeconds(60), // Timeout de conexão
+                SocketReadTimeout = TimeSpan.FromSeconds(60), // Timeout de leitura
+                SocketWriteTimeout = TimeSpan.FromSeconds(60), // Timeout de escrita
                 DispatchConsumersAsync = true
             };
 
-            _connection = factory.CreateConnection();
-            _channel = _connection.CreateModel();
+            try
+            {
+                _connection = factory.CreateConnection();
+                _channel = _connection.CreateModel();
 
-            _channel.ExchangeDeclare("novo_pedido_exchange", ExchangeType.Direct);
-            _channel.QueueDeclare("novo_pedido", false, false, false, null);
-            _channel.QueueBind("novo_pedido", "novo_pedido_exchange", "novo_pedido.*", null);
-            _channel.BasicQos(0, 1, false);
+                _channel.ExchangeDeclare("novo_pedido_exchange", ExchangeType.Direct);
+                _channel.QueueDeclare("novo_pedido", false, false, false, null);
+                _channel.QueueBind("novo_pedido", "novo_pedido_exchange", "novo_pedido.*", null);
+                _channel.BasicQos(0, 1, false);
 
-            _connection.ConnectionShutdown += RabbitMQ_ConnectionShutdown;
+                _connection.ConnectionShutdown += RabbitMQ_ConnectionShutdown;
+
+                _logger.LogInformation("Connected to RabbitMQ");
+            }
+            catch (BrokerUnreachableException ex)
+            {
+                _logger.LogError(ex, "Could not reach the broker");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while trying to connect to RabbitMQ");
+                throw;
+            }
         }
 
         private void RabbitMQ_ConnectionShutdown(object sender, ShutdownEventArgs e)
