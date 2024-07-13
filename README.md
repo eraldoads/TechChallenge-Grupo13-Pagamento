@@ -9,23 +9,29 @@ Tanto o build e push para o repositório no ECR da AWS usando Terraform, quanto 
 🧑🏻‍💻 *<b>RM352032</b>*: Luís Felipe Amengual Tatsch </br>
 
 ## Saga
-Na fase 5 evoluímos o nosso sistema e passamos a utilizar o padrão SAGA, no qual a comunicação entre os microsserviços ocorre por meio de mensageria.
+Na fase 5, evoluímos o nosso sistema e passamos a utilizar o padrão SAGA, no qual a comunicação entre os microsserviços ocorre por meio de mensageria.
 
 Optamos pelo padrão de Saga Coreografada, pois, o fluxo é simples e não há necessidade de uma orquestração mais elaborada.
 
-O Processo inicia no momento da criação do Pedido, onde é realizada a gravação no banco de dados e inserida uma mensagem na fila informando que um novo pedido foi criado, ambos dentro de uma mesma transação para garantirmos que as duas operações se completem ou nenhuma delas.
+O Processo inicia no momento da criação do Pedido, onde é realizada a gravação no banco de dados e inserida uma mensagem na fila informando que um novo pedido foi criado. Ambas operações ocorrem dentro de uma mesma transação para garantirmos que as duas se completem ou nenhuma delas.
 
 Caso ocorra falha em uma das operações dentro da transação, seja de gravação no banco de dados MySQL ou de publicação da mensagem na fila, nenhuma delas se completa e voltamos ao estado anterior.
 
-Também em uma transação atômica, o microsserviço de Pagamento lê a mensagem da fila <b>novo_pedido</b> e grava um pagamento no MongoDB com status <b>Pendente</b>. Após o cliente realizar o processo de pagamento via Mercado Pago, o endpoint de webhook recebe a notificação do Mercado Pago e atualiza o status do pagamento no MongoDB. Se aprovado, é publicada uma mensagem na fila <b>pagamento_aprovado</b> para que o microsserviço de Pedido dê andamento ao processo.
+Também em uma transação atômica, o microsserviço de Pagamento lê a mensagem da fila <b>novo_pedido</b> e grava um pagamento com status <b>Pendente</b> no MongoDB, relativo ao Id do pedido recebido na mensagem. 
 
-Abaixo, temos o trecho de código no qual atualizamos o status do pagamento no MongoDB e inserimos uma mensagem na fila <b>pagamento_aprovado</b>:
+Após o cliente realizar o processo de pagamento via Mercado Pago, o endpoint de webhook recebe a notificação do Mercado Pago e atualiza o status do pagamento no MongoDB. Se aprovado, o status do pagamento é atualizado para <b>Aprovado</b> no MongoDB e uma mensagem é publicada na fila <b>pagamento_aprovado</b> para que o microsserviço de Pedido dê andamento ao processo atualizando o status do pedido para <b>Em preparação</b>.
+
+![image](https://github.com/user-attachments/assets/c1885508-c5c3-46e9-86b6-22a309781401)
+
+Abaixo, temos o trecho de código no qual atualizamos o status do pagamento no MongoDB e inserimos uma mensagem na fila <b>pagamento_aprovado</b> em uma transação:
 
 ![image](https://github.com/user-attachments/assets/4387b185-440f-419b-b87b-d66fb3ab3fac)
 
+Caso ocorra erro no processo de pagamento, por exemplo, por uma indisponibilidade no MongoDB que impossibilite a gravação do pagamento relativo ao pedido recebido na mensagem, o microsserviço de Pagamento recoloca a mensagem na fila <b>novo_pedido</b> para ser lida novamente pela quantidade de vezes definida na variável de ambiente <b>QTDE_RETRY_PAGAMENTO</b>. 
 
-![image](https://github.com/user-attachments/assets/9147c2e4-f155-496a-887a-b39b4636d308)
+Se as tentativas excederem o número definido, a mensagem será inserida na fila <b>pagamento_erro</b> para que o microsserviço <b>Pedido</b> altere status do pedido que consta na mensagem para <b>Cancelado</b>.
 
+Caso o pagamento seja rejeitado pelo Mercado Pago, o cliente receberá a notificação no aplicativo e poderá alterar a forma de pagamento. Enquanto o pagamento não for aprovado, o pedido continuará com status <b>Recebido</b> e o pagamento com status <b>Pendente</b>.
 
 ## Arquitetura
 Na fase 5, adicionamos o RabbitMQ como broker de mensageria para implementarmos o padrão SAGA. 
