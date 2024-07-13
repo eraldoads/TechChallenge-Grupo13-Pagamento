@@ -104,8 +104,8 @@ namespace Data.Messaging
                 Ssl = new SslOption
                 {
                     Enabled = true,
-                    ServerName = _hostname, // Ou o nome do servidor conforme certificado
-                    Version = System.Security.Authentication.SslProtocols.Tls12 // Certifique-se de que a versão TLS é suportada pelo seu servidor
+                    ServerName = _hostname,
+                    Version = System.Security.Authentication.SslProtocols.Tls12
                 },
                 RequestedConnectionTimeout = TimeSpan.FromSeconds(60), // Timeout de conexão
                 SocketReadTimeout = TimeSpan.FromSeconds(60), // Timeout de leitura
@@ -129,7 +129,7 @@ namespace Data.Messaging
             }
             catch (BrokerUnreachableException ex)
             {
-                _logger.LogError(ex, "Broker inacessível");
+                _logger.LogError(ex, "Não foi possível alcançar o broker");
                 throw;
             }
             catch (Exception ex)
