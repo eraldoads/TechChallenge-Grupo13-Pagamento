@@ -33,6 +33,18 @@ Se as tentativas excederem o número definido, a mensagem será inserida na fila
 
 Caso o pagamento seja rejeitado pelo Mercado Pago, o cliente receberá a notificação no aplicativo e poderá alterar a forma de pagamento. Enquanto o pagamento não for aprovado, o pedido continuará com status <b>Recebido</b> e o pagamento com status <b>Pendente</b>.
 
+## Escaneamento de vulnerabilidades - OWASP ZAP
+
+Na fase 5, realizamos o escaneamento utilizando a ferramenta OWASP ZAP para identificarmos e tratarmos possíveis vulnerabilidades.
+
+![image](https://github.com/user-attachments/assets/122340a0-8731-4cd9-b2b6-ed7d12681444)
+
+![image](https://github.com/user-attachments/assets/16c4a058-d01c-43a1-be6e-2ecc42a82743)
+
+Não foram encontradas vulnerabilidades médias ou altas, portanto, não foi necessário o tratamento.
+
+Os relatórios OWASP-ZAP-Geração do Pagamento.pdf e OWASP-ZAP-Confirmação do Pagamento.pdf encontram-se na raíz desse projeto.
+
 ## Arquitetura
 Na fase 5, adicionamos o RabbitMQ como broker de mensageria para implementarmos o padrão SAGA. 
 
