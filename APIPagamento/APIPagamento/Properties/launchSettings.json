@@ -11,7 +11,10 @@
         "MERCADO_PAGO_CONSULTAR_QR_ORDER_PATH": "/merchant_orders/{0}",
         "MERCADO_PAGO_AUTHORIZATION": "Bearer TEST-1380797655451164-010212-2bb955330b75683baa093d93183e0c2e-1619908702",
         "MERCADO_PAGO_SPONSOR_ID": "58923039",
-        "WEBHOOK_ENDPOINT": "https://webhook.site/0ed53b32-a18f-4d3f-acbf-6cb022187561"
+        "WEBHOOK_ENDPOINT": "https://webhook.site/eeab9515-75c7-487f-9db7-f847cc7fd79d",
+        "RABBIT_HOSTNAME": "b-2e3cc774-1b4b-430c-aeb6-e56fbd0bdcff.mq.us-east-1.amazonaws.com",
+        "RABBIT_USERNAME": "piklesrabbit",
+        "RABBIT_PASSWORD": "Fast.FoodRabbitMQ"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "http://localhost:5245"

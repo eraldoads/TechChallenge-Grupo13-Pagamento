@@ -34,7 +34,7 @@ namespace Data.Repository
 
         public async Task<Pagamento> PutPagamento(Pagamento pagamento)
         {
-            var filter = Builders<Pagamento>.Filter.Eq(p => p.IdPagamento, pagamento.IdPagamento);
+            var filter = Builders<Pagamento>.Filter.Eq(p => p.Id, pagamento.Id);
             var update = Builders<Pagamento>.Update.Set(p => p.StatusPagamento, pagamento.StatusPagamento);
             await _pagamentoCollection.UpdateOneAsync(filter, update);
             return pagamento;
@@ -49,6 +49,14 @@ namespace Data.Repository
         protected virtual void Dispose(bool disposing)
         {
             // Dispose any resources if needed
+        }
+
+        public async Task<Pagamento?> GetPagamentoById(string idPagamento)
+        {
+            // Caso encontre mais de um registro pega sempre o ultimo.
+            return await _pagamentoCollection.Find(p => p.Id == idPagamento)
+                                             .SortByDescending(p => p.DataPagamento)
+                                             .FirstOrDefaultAsync();
         }
     }
 }
