@@ -20,6 +20,8 @@ namespace Data.Messaging
         private readonly string _hostname = Environment.GetEnvironmentVariable("RABBIT_HOSTNAME");
         private readonly string _username = Environment.GetEnvironmentVariable("RABBIT_USERNAME");
         private readonly string _password = Environment.GetEnvironmentVariable("RABBIT_PASSWORD");
+        private readonly Int16 _qtdeRetryPagamento = Convert.ToInt16(Environment.GetEnvironmentVariable("QTDE_RETRY_PAGAMENTO"));
+
         private readonly IPagamentoMessageSender _sender;
 
         private ConcurrentDictionary<string, int> _retryCountDictionary = new ConcurrentDictionary<string, int>();
@@ -57,7 +59,7 @@ namespace Data.Messaging
 
                     if (_retryCountDictionary.TryGetValue(content, out int retryCount))
                     {
-                        if (retryCount < 3) // Máximo de tentativas
+                        if (retryCount < _qtdeRetryPagamento) // Máximo de tentativas
                         {
                             _retryCountDictionary.AddOrUpdate(content, 1, (key, oldValue) => oldValue + 1);
                             // Rejeita e reenfileira a mensagem
@@ -102,8 +104,8 @@ namespace Data.Messaging
                 Ssl = new SslOption
                 {
                     Enabled = true,
-                    ServerName = _hostname, // Ou o nome do servidor conforme certificado
-                    Version = System.Security.Authentication.SslProtocols.Tls12 // Certifique-se de que a versão TLS é suportada pelo seu servidor
+                    ServerName = _hostname,
+                    Version = System.Security.Authentication.SslProtocols.Tls12
                 },
                 RequestedConnectionTimeout = TimeSpan.FromSeconds(60), // Timeout de conexão
                 SocketReadTimeout = TimeSpan.FromSeconds(60), // Timeout de leitura
@@ -123,23 +125,23 @@ namespace Data.Messaging
 
                 _connection.ConnectionShutdown += RabbitMQ_ConnectionShutdown;
 
-                _logger.LogInformation("Connected to RabbitMQ");
+                _logger.LogInformation("Conectado ao RabbitMQ");
             }
             catch (BrokerUnreachableException ex)
             {
-                _logger.LogError(ex, "Could not reach the broker");
+                _logger.LogError(ex, "Não foi possível alcançar o broker");
                 throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while trying to connect to RabbitMQ");
+                _logger.LogError(ex, "Ocorreu um erro ao tentar conectar no RabbitMQ");
                 throw;
             }
         }
 
         private void RabbitMQ_ConnectionShutdown(object sender, ShutdownEventArgs e)
         {
-            _logger.LogInformation("RabbitMQ connection shutdown.");
+            _logger.LogInformation("Desconectado do RabbitMQ");
         }
 
         private void EnsureNotDisposed()
