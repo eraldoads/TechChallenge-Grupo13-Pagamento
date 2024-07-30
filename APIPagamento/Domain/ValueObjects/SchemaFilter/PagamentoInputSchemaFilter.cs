@@ -15,7 +15,7 @@ namespace Domain.ValueObjects
                 // cria um objeto OpenApiObject com os valores desejados
                 var modeloPagamento = new OpenApiObject
                 {
-                    ["idPagamento"] = new OpenApiInteger(0),
+                    //["idPagamento"] = new OpenApiInteger(0),
                     ["StatusPagamento"] = new OpenApiString("Pendente"),
                     ["ValorPagamento"] = new OpenApiInteger(0),
                     ["MetodoPagamento"] = new OpenApiString("string"),

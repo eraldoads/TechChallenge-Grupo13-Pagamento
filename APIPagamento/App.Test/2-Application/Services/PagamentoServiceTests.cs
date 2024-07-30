@@ -13,6 +13,7 @@ namespace App.Test._2_Application.Services
     {
         private readonly IPagamentoService _AppServices;
         private readonly Mock<IPagamentoRepository> _Repository = new();
+        private readonly Mock<IPagamentoMessageSender> _pagamentoMessageSender = new();
         private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock = new();
 
         public PagamentoServiceTests()
@@ -28,7 +29,7 @@ namespace App.Test._2_Application.Services
             var client = new HttpClient(_httpMessageHandlerMock.Object);
 
             // Inject Mock Repository and HttpClient
-            _AppServices = new PagamentoService(_Repository.Object, client);
+            _AppServices = new PagamentoService(_Repository.Object, _pagamentoMessageSender.Object, client);
         }
 
         #region [GET]
@@ -80,8 +81,7 @@ namespace App.Test._2_Application.Services
         {
             // Arrange
             var pagamentoInput = new PagamentoInput
-            {
-                IdPagamento = 1,
+            {                
                 IdPedido = 1,
                 ValorPagamento = 100.0f,
                 MetodoPagamento = "QRCode",
@@ -89,8 +89,7 @@ namespace App.Test._2_Application.Services
             };
 
             var pagamentoOutput = new PagamentoOutput
-            {
-                IdPagamento = pagamentoInput.IdPagamento,
+            {                
                 ValorPagamento = pagamentoInput.ValorPagamento,
                 MetodoPagamento = pagamentoInput.MetodoPagamento,
                 StatusPagamento = pagamentoInput.StatusPagamento,
@@ -124,8 +123,7 @@ namespace App.Test._2_Application.Services
                 IdPedido = idPedido,
                 ValorPagamento = 100.0f,
                 MetodoPagamento = "QRCode",
-                StatusPagamento = "Pendente",
-                IdPagamento = 1
+                StatusPagamento = "Pendente"                
             };
             var qrCodeOutput = new QRCodeOutput
             {

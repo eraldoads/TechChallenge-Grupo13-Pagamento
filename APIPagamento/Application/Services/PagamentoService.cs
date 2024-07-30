@@ -2,13 +2,15 @@
 using Domain.Entities.Output;
 using Domain.Interfaces;
 using Newtonsoft.Json;
+using System.Transactions;
 
 namespace Application.Interfaces
 {
     public class PagamentoService : IPagamentoService
     {
         private readonly IPagamentoRepository _pagamentoRepository;
-        //private readonly IPedidoRepository _pedidoRepository;
+        private readonly IPagamentoMessageSender _pagamentoMessageSender;
+        
         private readonly string _baseUrlMercadoPago = Environment.GetEnvironmentVariable("MERCADO_PAGO_BASE_URL");
         private readonly string _pathCriarOrdemMercadoPago = Environment.GetEnvironmentVariable("MERCADO_PAGO_CRIAR_QR_ORDER_PATH");
         private readonly string _pathConsultarOrdemMercadoPago = Environment.GetEnvironmentVariable("MERCADO_PAGO_CONSULTAR_QR_ORDER_PATH");
@@ -17,14 +19,14 @@ namespace Application.Interfaces
         private readonly string _endpointWebhook = Environment.GetEnvironmentVariable("WEBHOOK_ENDPOINT");
         private readonly HttpClient _httpClient;
 
-        public PagamentoService(IPagamentoRepository pagamentoRepository
-                                , HttpClient httpClient
-                                //, IPedidoRepository pedidoRepository
+        public PagamentoService(IPagamentoRepository pagamentoRepository,
+                                IPagamentoMessageSender pagamentoMessageSender,
+                                HttpClient httpClient                                
                                 )
         {
             _pagamentoRepository = pagamentoRepository;
-            _httpClient = httpClient;
-            //_pedidoRepository = pedidoRepository;
+            _pagamentoMessageSender = pagamentoMessageSender;
+            _httpClient = httpClient;            
         }
 
 
@@ -61,7 +63,7 @@ namespace Application.Interfaces
             // Mapear para PagamentoOutput antes de retornar
             var pagamentoOutput = new PagamentoOutput
             {
-                IdPagamento = novoPagamento.IdPagamento,
+                //IdPagamento = novoPagamento.,
                 ValorPagamento = novoPagamento.ValorPagamento,
                 MetodoPagamento = novoPagamento.MetodoPagamento,
                 StatusPagamento = novoPagamento.StatusPagamento,
@@ -83,13 +85,13 @@ namespace Application.Interfaces
             var payLoad = new PayloadQRCodeOutput()
             {
                 description = string.Format("Pedido_{0}", pagamento.IdPedido),
-                external_reference = pagamento.IdPagamento.ToString(),
+                external_reference = pagamento.Id.ToString(),
                 items =
                 [
                     new()
                     {
-                        title = string.Format("Pagamento_{0}", pagamento.IdPagamento),
-                        description = "external_reference >>> IdPedido",
+                        title = string.Format("Pagamento_{0}", pagamento.Id),
+                        description = "external_reference >>> Id do Pagamento",
                         unit_price = valorPagamento,
                         quantity = 1,
                         unit_measure = "unit",
@@ -101,7 +103,7 @@ namespace Application.Interfaces
                 {
                     id = _sponsorIdMercadoPago
                 },
-                title = string.Format("Pedido_{0}_Pagamento_{1}", pagamento.IdPedido, pagamento.IdPagamento),
+                title = string.Format("Pedido_{0}_Pagamento_{1}", pagamento.IdPedido, pagamento.Id),
                 total_amount = valorPagamento
             };
 
@@ -132,60 +134,64 @@ namespace Application.Interfaces
             return qrcodeOutput;
         }
 
-        //public async Task ProcessarNotificacaoPagamento(long id_merchant_order)
-        //{
-        //    var ordemPagamento = await ConsultarOrdemPagamentoMercadoPago(id_merchant_order);
+        public async Task ProcessarNotificacaoPagamento(long id_merchant_order)
+        {
+            var ordemPagamento = await ConsultarOrdemPagamentoMercadoPago(id_merchant_order);
 
-        //    if (ordemPagamento.external_reference != null)
-        //    {
-        //        var pedido = await _pedidoRepository.GetPedidoById(Convert.ToInt32(ordemPagamento.external_reference));
-        //        var pagamento = await _pagamentoRepository.GetPagamentoByIdPedido(pedido.IdPedido);
-        //        string statusPagamento = string.Empty;
+            if (ordemPagamento.external_reference != null)
+            {                
+                var pagamento = await _pagamentoRepository.GetPagamentoById(ordemPagamento.external_reference);
+                string statusPagamento = string.Empty;
 
-        //        foreach (var pgto in ordemPagamento.payments)
-        //        {
-        //            statusPagamento = pgto.status;
-        //            if (statusPagamento.Equals("approved"))
-        //                break;
-        //        }
+                foreach (var pgto in ordemPagamento.payments)
+                {
+                    statusPagamento = pgto.status;
+                    if (statusPagamento.Equals("approved"))
+                        break;
+                }
 
-        //        switch (statusPagamento)
-        //        {
-        //            case "rejected":
-        //                statusPagamento = "Rejeitado";
-        //                break;
-        //            case "approved":
-        //                statusPagamento = "Aprovado";
-        //                break;
-        //            default:
-        //                break;
-        //        }
+                switch (statusPagamento)
+                {
+                    case "rejected":
+                        statusPagamento = "Rejeitado";
+                        break;
+                    case "approved":
+                        statusPagamento = "Aprovado";
+                        break;
+                    default:
+                        break;
+                }
 
-        //        if (!statusPagamento.Equals(pagamento.StatusPagamento))
-        //        {
-        //            pagamento.StatusPagamento = statusPagamento;
-        //            await _pagamentoRepository.PutPagamento(pagamento);
-        //        }
+                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+                {
+                    if (!statusPagamento.Equals(pagamento.StatusPagamento))
+                    {
+                        pagamento.StatusPagamento = statusPagamento;
+                        await _pagamentoRepository.PutPagamento(pagamento);
+                    }
 
-        //        if (ordemPagamento.order_status.Equals("paid"))
-        //        {
-        //            pedido.StatusPedido = "Em Preparação";
-        //            _pedidoRepository.UpdatePedido(pedido);
-        //        }
-        //    }
-        //}
+                    if (ordemPagamento.order_status.Equals("paid"))
+                    {
+                        string message = JsonConvert.SerializeObject(pagamento);
+                        _pagamentoMessageSender.SendMessage("pagamento_aprovado", message);
+                    }
 
-        //private async Task<OrdemPagamento> ConsultarOrdemPagamentoMercadoPago(long merchant_order)
-        //{                        
-        //    var client = new HttpClient();
-        //    var urlConsultarOrdem = _baseUrlMercadoPago + string.Format(_pathConsultarOrdemMercadoPago, merchant_order);
-        //    var request = new HttpRequestMessage(HttpMethod.Get, urlConsultarOrdem);
-        //    request.Headers.Add("Authorization", _authorizationMercadoPago);
-        //    var response = await client.SendAsync(request);            
-        //    var responseJson = await response.Content.ReadAsStringAsync();
-        //    var ordemPagamento = JsonConvert.DeserializeObject<OrdemPagamento>(responseJson);
+                    scope.Complete();
+                }
+            }
+        }
 
-        //    return ordemPagamento;
-        //}
+        private async Task<OrdemPagamento> ConsultarOrdemPagamentoMercadoPago(long merchant_order)
+        {
+            var client = new HttpClient();
+            var urlConsultarOrdem = _baseUrlMercadoPago + string.Format(_pathConsultarOrdemMercadoPago, merchant_order);
+            var request = new HttpRequestMessage(HttpMethod.Get, urlConsultarOrdem);
+            request.Headers.Add("Authorization", _authorizationMercadoPago);
+            var response = await client.SendAsync(request);
+            var responseJson = await response.Content.ReadAsStringAsync();
+            var ordemPagamento = JsonConvert.DeserializeObject<OrdemPagamento>(responseJson);
+
+            return ordemPagamento;
+        }
     }
 }
